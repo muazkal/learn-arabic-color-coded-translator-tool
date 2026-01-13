@@ -1,7 +1,7 @@
-import { TextAligner } from '@/components/TextAligner';
+import { MultiStepAligner } from "@/components/MultiStepAligner";
 
 const Index = () => {
-  return <TextAligner />;
+  return <MultiStepAligner />;
 };
 
 export default Index;
