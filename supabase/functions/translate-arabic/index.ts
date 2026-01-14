@@ -25,30 +25,48 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    // Split text into paragraphs to preserve line breaks
-    const paragraphs = arabicText.split(/\n+/).filter((p: string) => p.trim());
-    
-    const systemPrompt = `You are an expert Arabic to English translator. Your task is to:
-1. Translate the given Arabic text to English accurately
-2. Return a JSON object with word-by-word translations
+    const systemPrompt = `You are an expert Arabic linguist specializing in morphological analysis and Arabic-to-English translation.
 
-For each Arabic word or meaningful phrase, provide its English translation.
-Maintain the order and keep punctuation with its associated word.
+Your task is to perform MORPHOLOGICAL SEGMENTATION of Arabic text and provide word-by-word translations.
+
+For each Arabic word, you must break it down into its meaningful morphological units:
+- Prefixes (أ، ت، ي، ن، ال، و، ف، ب، ل، ك، س)
+- Root/stem
+- Suffixes and attached pronouns (ـي، ـك، ـه، ـها، ـكم، ـهم، ـنا، ـون، ـين، ـات، ة)
+- Verb conjugation markers
+- Particles
+
+Each morphological unit should have its own English meaning.
+
+IMPORTANT RULES:
+1. Keep the Arabic text in reading order (right-to-left within each unit)
+2. Preserve ALL punctuation - attach it to the nearest word
+3. Mark line breaks with a special marker: {"arabic": "[LINE_BREAK]", "english": "[LINE_BREAK]"}
+4. Each unit should be the SMALLEST meaningful morpheme when possible
+5. For common phrases that form a single semantic unit, keep them together
 
 Return ONLY valid JSON in this exact format:
 {
-  "fullTranslation": "The complete English translation of the entire text",
-  "pairs": [
-    {"arabic": "الكلمة", "english": "the word"},
-    {"arabic": "الثانية", "english": "second"}
+  "lines": [
+    {
+      "arabicLine": "الجملة العربية الكاملة",
+      "englishLine": "The complete English sentence",
+      "pairs": [
+        {"arabic": "أُرِيدُ", "english": "I want"},
+        {"arabic": "أَنْ", "english": "to"},
+        {"arabic": "أَتَعَلَّمَ", "english": "learn"}
+      ]
+    }
   ]
 }
 
-Important:
-- Keep Arabic words/phrases in their original order
-- Attach punctuation to the word it belongs to
-- Group multi-word expressions that form a single meaning
-- Preserve line break markers by including a special pair: {"arabic": "[NEWLINE]", "english": "[NEWLINE]"}`;
+Example morphological breakdown:
+- "يتعلمون" → "they are learning" (keep as one if semantic unit)
+- "كتابي" → split into "كتاب" (book) + "ي" (my) OR keep as "كتابي" (my book)
+- "والله" → "و" (and) + "الله" (Allah/God)
+- "بسم" → "ب" (in/by) + "اسم" (name)
+
+For Quranic or classical Arabic, provide accurate translations preserving the meaning.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -60,9 +78,9 @@ Important:
         model: "google/gemini-3-flash-preview",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: `Translate this Arabic text:\n\n${arabicText}` }
+          { role: "user", content: `Perform morphological segmentation and translation for this Arabic text:\n\n${arabicText}` }
         ],
-        temperature: 0.3,
+        temperature: 0.2,
       }),
     });
 
@@ -100,10 +118,21 @@ Important:
       translationResult = JSON.parse(jsonStr);
     } catch (parseError) {
       console.error("Failed to parse translation JSON:", content);
-      // Fallback: return the raw text as full translation
+      
+      // Fallback: Create basic structure from the input
+      const lines = arabicText.split(/\n+/).filter((l: string) => l.trim());
       translationResult = {
-        fullTranslation: content,
-        pairs: []
+        lines: lines.map((line: string) => {
+          const words = line.trim().split(/\s+/);
+          return {
+            arabicLine: line.trim(),
+            englishLine: "Translation unavailable - please edit manually",
+            pairs: words.map((word: string) => ({
+              arabic: word,
+              english: ""
+            }))
+          };
+        })
       };
     }
 
