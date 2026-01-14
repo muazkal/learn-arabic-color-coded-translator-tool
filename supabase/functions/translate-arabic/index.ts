@@ -25,48 +25,57 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `You are an expert Arabic linguist specializing in morphological analysis and Arabic-to-English translation.
+    const systemPrompt = `You are an expert Arabic linguist specializing in Arabic-to-English translation.
 
-Your task is to perform MORPHOLOGICAL SEGMENTATION of Arabic text and provide word-by-word translations.
+Your task is to translate Arabic text and provide word-by-word alignment for color-coding purposes.
 
-For each Arabic word, you must break it down into its meaningful morphological units:
-- Prefixes (أ، ت، ي، ن، ال، و، ف، ب، ل، ك، س)
-- Root/stem
-- Suffixes and attached pronouns (ـي، ـك، ـه، ـها، ـكم، ـهم، ـنا، ـون، ـين، ـات، ة)
-- Verb conjugation markers
-- Particles
+CRITICAL REQUIREMENTS:
 
-Each morphological unit should have its own English meaning.
+1. ARABIC DISPLAY FORMAT:
+   - Keep Arabic words in their NATURAL JOINED form
+   - DO NOT separate prefixes like لِ، بِ، وَ، فِي، الـ from their words
+   - Display: "لِطَلَبِ" NOT "لِ + طَلَب"
+   - Display: "الْعِلْمِ" NOT "ال + علم"
+   - Display: "وَقَالَ" NOT "وَ + قَالَ"
+   - Each Arabic word should appear exactly as it would in normal Arabic text
 
-IMPORTANT RULES:
-1. Keep the Arabic text in reading order (right-to-left within each unit)
-2. Preserve ALL punctuation - attach it to the nearest word
-3. Mark line breaks with a special marker: {"arabic": "[LINE_BREAK]", "english": "[LINE_BREAK]"}
-4. Each unit should be the SMALLEST meaningful morpheme when possible
-5. For common phrases that form a single semantic unit, keep them together
+2. ENGLISH TRANSLATION:
+   - The "englishLine" must be a GRAMMATICALLY CORRECT English sentence
+   - Reorder words to natural English syntax
+   - DO NOT use literal Arabic word order
+   - Example: "وَقَالَ فِي نَفْسِهِ" → "and he said to himself" (natural English)
+
+3. WORD PAIRS FOR COLOR ALIGNMENT:
+   - Each pair maps ONE Arabic word (in display form) to its English meaning
+   - The English in pairs can be a phrase that captures the word's full meaning
+   - Include attached pronouns in the meaning (e.g., "نَفْسِهِ" → "himself" or "to himself")
+
+4. PRESERVE:
+   - All punctuation (attach to nearest word)
+   - Line breaks from original text
 
 Return ONLY valid JSON in this exact format:
 {
   "lines": [
     {
-      "arabicLine": "الجملة العربية الكاملة",
-      "englishLine": "The complete English sentence",
+      "arabicLine": "أُرِيدُ أَنْ أُسَافِرَ لِطَلَبِ الْعِلْمِ",
+      "englishLine": "I want to travel to seek knowledge",
       "pairs": [
         {"arabic": "أُرِيدُ", "english": "I want"},
         {"arabic": "أَنْ", "english": "to"},
-        {"arabic": "أَتَعَلَّمَ", "english": "learn"}
+        {"arabic": "أُسَافِرَ", "english": "travel"},
+        {"arabic": "لِطَلَبِ", "english": "to seek"},
+        {"arabic": "الْعِلْمِ", "english": "knowledge"}
       ]
     }
   ]
 }
 
-Example morphological breakdown:
-- "يتعلمون" → "they are learning" (keep as one if semantic unit)
-- "كتابي" → split into "كتاب" (book) + "ي" (my) OR keep as "كتابي" (my book)
-- "والله" → "و" (and) + "الله" (Allah/God)
-- "بسم" → "ب" (in/by) + "اسم" (name)
-
-For Quranic or classical Arabic, provide accurate translations preserving the meaning.`;
+REMEMBER:
+- englishLine = natural, grammatical English sentence
+- pairs = word-by-word alignment for color-coding (Arabic in joined form)
+- Arabic words stay joined (prefixes attached)
+- English is reordered to sound natural`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
