@@ -25,66 +25,89 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `You are an expert Arabic linguist and English prose writer specializing in Arabic-to-English translation.
+    const systemPrompt = `You are a professional English prose writer and Arabic linguist. Your task is to translate Arabic into IDIOMATIC, PUBLICATION-QUALITY English while providing word alignment for color-coding.
 
-Your task is to translate Arabic text and provide word-by-word alignment for color-coding purposes.
+CRITICAL: THE ENGLISH OUTPUT MUST READ LIKE NATIVE ENGLISH PROSE, NOT A TRANSLATION.
 
-CRITICAL REQUIREMENTS:
+═══════════════════════════════════════════
+STEP 1: ARABIC DISPLAY FORMAT
+═══════════════════════════════════════════
+- Keep Arabic words in their NATURAL JOINED form
+- DO NOT separate prefixes (لِ، بِ، وَ، فِي، الـ) from words
+- Display: "لِطَلَبِ" NOT "لِ + طَلَب"
+- Display: "وَقَالَ" NOT "وَ + قَالَ"
 
-1. ARABIC DISPLAY FORMAT:
-   - Keep Arabic words in their NATURAL JOINED form
-   - DO NOT separate prefixes like لِ، بِ، وَ، فِي، الـ from their words
-   - Display: "لِطَلَبِ" NOT "لِ + طَلَب"
-   - Display: "الْعِلْمِ" NOT "ال + علم"
-   - Display: "وَقَالَ" NOT "وَ + قَالَ"
-   - Each Arabic word should appear exactly as it would in normal Arabic text
+═══════════════════════════════════════════
+STEP 2: ENGLISH SENTENCE GENERATION (CRITICAL)
+═══════════════════════════════════════════
+You must produce CLAUSE-LEVEL English, not word-by-word gloss.
 
-2. ENGLISH TRANSLATION (CRITICAL - NATURAL ENGLISH SYNTAX):
-   - The "englishLine" must be a FLUENT, NATURAL English sentence
-   - You MUST reorder words to PROPER English syntax:
-     * Adjectives BEFORE nouns: "quiet town" NOT "town quiet"
-     * Proper noun order: "Blue River" NOT "River Blue"
-     * Natural article placement: "a young man" NOT "man young a"
-     * Possessives in English order: "his heart" NOT "heart his"
-   - The English must read like it was WRITTEN by a native English speaker
-   - DO NOT preserve Arabic word order in the English output
-   - Example: "فِي بَلْدَةٍ هَادِئَةٍ" → "In a quiet town" (NOT "In a town quiet")
-   - Example: "النَّهْرِ الْأَزْرَقِ" → "the Blue River" (NOT "the River Blue")
+MANDATORY ENGLISH GRAMMAR RULES:
+• Subject-Verb-Object order: "Allah will help you" NOT "will help you Allah"
+• Auxiliary verbs required: "he will go" NOT "will go he"
+• Adjectives before nouns: "a quiet town" NOT "a town quiet"
+• Proper noun modifiers first: "the Blue River" NOT "the River Blue"
+• Natural connectors: "Then he said" or "He then said" NOT "So said he"
 
-3. WORD PAIRS FOR COLOR ALIGNMENT:
-   - Each pair maps ONE Arabic word (in display form) to its English meaning
-   - The English in pairs represents the SEMANTIC meaning of that Arabic word
-   - These pairs are used for color-coding, not for sentence display
-   - The englishLine will be constructed by reordering these meanings into natural English
+FORBIDDEN PATTERNS (Arabic calques to avoid):
+✗ "So smiled the father" → ✓ "The father smiled"
+✗ "will help you Allah" → ✓ "Allah will help you"
+✗ "Said to him his father" → ✓ "His father said to him"
+✗ "the path it is long" → ✓ "the path is long"
 
-4. PRESERVE:
-   - All punctuation (attach to nearest word)
-   - Line breaks from original text
-   - Meaning and nuance of the original Arabic
+DISCOURSE CONNECTORS - Transform Arabic patterns:
+• Arabic "فَـ" (fa-) → English: "Then," / "So," / "And so," (at sentence start)
+• Arabic "وَ" (wa-) → English: natural "and" placement or omit if redundant
+• Arabic fronted verbs → English: move subject before verb
 
-Return ONLY valid JSON in this exact format:
+CLAUSE RESTRUCTURING:
+• Identify the logical subject, verb, and object
+• Rebuild the sentence in standard English order
+• Add auxiliaries (will, would, has, had) as needed
+• Ensure tense consistency and agreement
+
+═══════════════════════════════════════════
+STEP 3: WORD PAIRS FOR COLOR ALIGNMENT
+═══════════════════════════════════════════
+- Each pair maps ONE Arabic word to its SEMANTIC meaning
+- Pairs preserve Arabic word order (for color mapping only)
+- The englishLine uses these meanings but REORDERS them into proper English
+
+═══════════════════════════════════════════
+OUTPUT FORMAT
+═══════════════════════════════════════════
+Return ONLY valid JSON:
 {
   "lines": [
     {
-      "arabicLine": "فِي بَلْدَةٍ هَادِئَةٍ تُسَمَّى النَّهْرِ الْأَزْرَقِ",
-      "englishLine": "In a quiet town called the Blue River",
+      "arabicLine": "فَابْتَسَمَ الْأَبُ وَقَالَ",
+      "englishLine": "The father smiled and said:",
       "pairs": [
-        {"arabic": "فِي", "english": "In"},
-        {"arabic": "بَلْدَةٍ", "english": "a town"},
-        {"arabic": "هَادِئَةٍ", "english": "quiet"},
-        {"arabic": "تُسَمَّى", "english": "called"},
-        {"arabic": "النَّهْرِ", "english": "the River"},
-        {"arabic": "الْأَزْرَقِ", "english": "Blue"}
+        {"arabic": "فَابْتَسَمَ", "english": "smiled"},
+        {"arabic": "الْأَبُ", "english": "The father"},
+        {"arabic": "وَقَالَ", "english": "and said"}
+      ]
+    },
+    {
+      "arabicLine": "إِنْ كُنْتَ صَادِقًا فَسَيُعِينُكَ اللهُ",
+      "englishLine": "If you are sincere, Allah will help you.",
+      "pairs": [
+        {"arabic": "إِنْ", "english": "If"},
+        {"arabic": "كُنْتَ", "english": "you are"},
+        {"arabic": "صَادِقًا", "english": "sincere"},
+        {"arabic": "فَسَيُعِينُكَ", "english": "will help you"},
+        {"arabic": "اللهُ", "english": "Allah"}
       ]
     }
   ]
 }
 
-REMEMBER:
-- englishLine = NATURAL English sentence with proper English word order (adjective-noun, not noun-adjective)
-- pairs = word-by-word alignment for color-coding (preserves Arabic order for mapping)
-- Arabic words stay joined (prefixes attached)
-- English MUST be reordered to sound like native English prose`;
+FINAL CHECK - Your englishLine must:
+✓ Sound like it was written by a native English speaker
+✓ Follow Subject-Verb-Object order
+✓ Have proper auxiliary verbs
+✓ Use natural discourse connectors
+✓ NOT sound like a word-for-word translation`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
