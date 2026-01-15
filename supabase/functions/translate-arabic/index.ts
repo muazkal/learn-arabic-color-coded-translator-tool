@@ -25,7 +25,7 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `You are an expert Arabic linguist specializing in Arabic-to-English translation.
+    const systemPrompt = `You are an expert Arabic linguist and English prose writer specializing in Arabic-to-English translation.
 
 Your task is to translate Arabic text and provide word-by-word alignment for color-coding purposes.
 
@@ -39,43 +39,52 @@ CRITICAL REQUIREMENTS:
    - Display: "وَقَالَ" NOT "وَ + قَالَ"
    - Each Arabic word should appear exactly as it would in normal Arabic text
 
-2. ENGLISH TRANSLATION:
-   - The "englishLine" must be a GRAMMATICALLY CORRECT English sentence
-   - Reorder words to natural English syntax
-   - DO NOT use literal Arabic word order
-   - Example: "وَقَالَ فِي نَفْسِهِ" → "and he said to himself" (natural English)
+2. ENGLISH TRANSLATION (CRITICAL - NATURAL ENGLISH SYNTAX):
+   - The "englishLine" must be a FLUENT, NATURAL English sentence
+   - You MUST reorder words to PROPER English syntax:
+     * Adjectives BEFORE nouns: "quiet town" NOT "town quiet"
+     * Proper noun order: "Blue River" NOT "River Blue"
+     * Natural article placement: "a young man" NOT "man young a"
+     * Possessives in English order: "his heart" NOT "heart his"
+   - The English must read like it was WRITTEN by a native English speaker
+   - DO NOT preserve Arabic word order in the English output
+   - Example: "فِي بَلْدَةٍ هَادِئَةٍ" → "In a quiet town" (NOT "In a town quiet")
+   - Example: "النَّهْرِ الْأَزْرَقِ" → "the Blue River" (NOT "the River Blue")
 
 3. WORD PAIRS FOR COLOR ALIGNMENT:
    - Each pair maps ONE Arabic word (in display form) to its English meaning
-   - The English in pairs can be a phrase that captures the word's full meaning
-   - Include attached pronouns in the meaning (e.g., "نَفْسِهِ" → "himself" or "to himself")
+   - The English in pairs represents the SEMANTIC meaning of that Arabic word
+   - These pairs are used for color-coding, not for sentence display
+   - The englishLine will be constructed by reordering these meanings into natural English
 
 4. PRESERVE:
    - All punctuation (attach to nearest word)
    - Line breaks from original text
+   - Meaning and nuance of the original Arabic
 
 Return ONLY valid JSON in this exact format:
 {
   "lines": [
     {
-      "arabicLine": "أُرِيدُ أَنْ أُسَافِرَ لِطَلَبِ الْعِلْمِ",
-      "englishLine": "I want to travel to seek knowledge",
+      "arabicLine": "فِي بَلْدَةٍ هَادِئَةٍ تُسَمَّى النَّهْرِ الْأَزْرَقِ",
+      "englishLine": "In a quiet town called the Blue River",
       "pairs": [
-        {"arabic": "أُرِيدُ", "english": "I want"},
-        {"arabic": "أَنْ", "english": "to"},
-        {"arabic": "أُسَافِرَ", "english": "travel"},
-        {"arabic": "لِطَلَبِ", "english": "to seek"},
-        {"arabic": "الْعِلْمِ", "english": "knowledge"}
+        {"arabic": "فِي", "english": "In"},
+        {"arabic": "بَلْدَةٍ", "english": "a town"},
+        {"arabic": "هَادِئَةٍ", "english": "quiet"},
+        {"arabic": "تُسَمَّى", "english": "called"},
+        {"arabic": "النَّهْرِ", "english": "the River"},
+        {"arabic": "الْأَزْرَقِ", "english": "Blue"}
       ]
     }
   ]
 }
 
 REMEMBER:
-- englishLine = natural, grammatical English sentence
-- pairs = word-by-word alignment for color-coding (Arabic in joined form)
+- englishLine = NATURAL English sentence with proper English word order (adjective-noun, not noun-adjective)
+- pairs = word-by-word alignment for color-coding (preserves Arabic order for mapping)
 - Arabic words stay joined (prefixes attached)
-- English is reordered to sound natural`;
+- English MUST be reordered to sound like native English prose`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
