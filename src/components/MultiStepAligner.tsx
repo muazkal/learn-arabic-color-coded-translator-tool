@@ -42,13 +42,19 @@ interface ColoredLine {
 
 type Step = 'input' | 'editing' | 'output';
 
-// Arabic character validation regex - allows Arabic letters, diacritics, punctuation, spaces, newlines
-const ARABIC_REGEX = /^[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF\u200C\u200D\s\n\r.,،؛:؟!٪٫٬«»\-_()\[\]۰-۹٠-٩]+$/;
+// Validation: reject ONLY if Latin letters (a-z, A-Z) are present
+// Accept everything else: Arabic, numbers, any punctuation, symbols, etc.
+const LATIN_REGEX = /[a-zA-Z]/;
+const ARABIC_LETTER_REGEX = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
 
-function isValidArabicOnly(text: string): boolean {
+function isValidArabicInput(text: string): boolean {
   const trimmed = text.trim();
   if (!trimmed) return false;
-  return ARABIC_REGEX.test(trimmed);
+  // Must contain at least one Arabic letter
+  if (!ARABIC_LETTER_REGEX.test(trimmed)) return false;
+  // Must NOT contain any Latin letters
+  if (LATIN_REGEX.test(trimmed)) return false;
+  return true;
 }
 
 export function MultiStepAligner() {
@@ -63,8 +69,8 @@ export function MultiStepAligner() {
 
   const handleArabicChange = (value: string) => {
     setArabicText(value);
-    if (value.trim() && !isValidArabicOnly(value)) {
-      setValidationError('Only Arabic characters are allowed. Please remove any English letters, numbers, or non-Arabic symbols.');
+    if (value.trim() && !isValidArabicInput(value)) {
+      setValidationError('English letters (a-z, A-Z) are not allowed. Please remove any Latin characters.');
     } else {
       setValidationError(null);
     }
@@ -80,10 +86,10 @@ export function MultiStepAligner() {
       return;
     }
 
-    if (!isValidArabicOnly(arabicText)) {
+    if (!isValidArabicInput(arabicText)) {
       toast({
         title: "Invalid input",
-        description: "Only Arabic characters are allowed. Please remove any non-Arabic text.",
+        description: "English letters (a-z, A-Z) are not allowed. Please remove any Latin characters.",
         variant: "destructive",
       });
       return;
@@ -235,17 +241,19 @@ export function MultiStepAligner() {
       box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
     }
     .arabic-line {
-      font-size: 1.75rem;
+      font-size: 18px;
       line-height: 2.5;
       text-align: right;
+      direction: rtl;
       margin-bottom: 0.75rem;
       font-family: 'Traditional Arabic', 'Scheherazade', 'Amiri', serif;
       letter-spacing: 0.02em;
       word-spacing: 0.3em;
     }
     .english-line {
-      font-size: 1.1rem;
+      font-size: 14px;
       line-height: 2;
+      direction: ltr;
       color: #374151;
       padding-top: 0.5rem;
       border-top: 1px solid #e5e7eb;
@@ -385,7 +393,7 @@ export function MultiStepAligner() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
-                <strong>Note:</strong> Only Arabic characters are accepted. English letters, numbers, or other scripts will be rejected.
+                <strong>Note:</strong> English letters (a-z, A-Z) are not allowed. Numbers, punctuation, and symbols are accepted.
               </div>
               
               <Textarea
@@ -449,7 +457,7 @@ export function MultiStepAligner() {
                 {lines.map((line, lineIdx) => (
                   <div key={lineIdx} className="border rounded-lg overflow-hidden">
                     <div className="bg-muted p-3">
-                      <div className="font-arabic text-lg text-right" dir="rtl">
+                      <div className="font-arabic text-right" style={{ fontSize: '18px', direction: 'rtl' }}>
                         {line.arabicLine}
                       </div>
                     </div>
@@ -463,8 +471,8 @@ export function MultiStepAligner() {
                             {pairIdx + 1}
                           </div>
                           <div 
-                            className="col-span-5 text-right pr-4 font-arabic text-lg bg-amber-50 rounded px-2 py-1"
-                            dir="rtl"
+                            className="col-span-5 text-right pr-4 font-arabic bg-amber-50 rounded px-2 py-1"
+                            style={{ fontSize: '18px', direction: 'rtl' }}
                           >
                             {pair.arabic}
                           </div>
@@ -525,8 +533,8 @@ export function MultiStepAligner() {
                     >
                       {/* Arabic Line - Full sentence with colored words */}
                       <div 
-                        className="text-2xl font-arabic leading-loose text-right"
-                        dir="rtl"
+                        className="font-arabic leading-loose text-right"
+                        style={{ fontSize: '18px', direction: 'rtl' }}
                       >
                         {line.pairs.map((pair, pairIdx) => {
                           const colors = colorClasses[pair.colorName] || colorClasses.red;
@@ -546,7 +554,7 @@ export function MultiStepAligner() {
                       <div className="border-t border-gray-200"></div>
                       
                       {/* English Line - Full sentence with colored words */}
-                      <div className="text-lg leading-relaxed">
+                      <div className="leading-relaxed" style={{ fontSize: '14px', direction: 'ltr' }}>
                         {line.pairs.map((pair, pairIdx) => {
                           const colors = colorClasses[pair.colorName] || colorClasses.red;
                           return (
