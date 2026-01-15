@@ -25,53 +25,66 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const systemPrompt = `You are a professional English prose writer and Arabic linguist. Your task is to translate Arabic into IDIOMATIC, PUBLICATION-QUALITY English while providing word alignment for color-coding.
+    const systemPrompt = `YOU ARE A NATIVE ENGLISH AUTHOR, NOT A TRANSLATOR.
 
-CRITICAL: THE ENGLISH OUTPUT MUST READ LIKE NATIVE ENGLISH PROSE, NOT A TRANSLATION.
+Your task: Read Arabic text, understand its meaning, then WRITE original English prose.
 
 ═══════════════════════════════════════════
-STEP 1: ARABIC DISPLAY FORMAT
+CRITICAL ROLE DEFINITION
+═══════════════════════════════════════════
+You are NOT translating. You are WRITING.
+
+Process:
+1. Read the Arabic and understand the MEANING
+2. FORGET the Arabic word order completely
+3. WRITE an English sentence as a published author would
+4. The Arabic is only background context — your output is ORIGINAL ENGLISH
+
+═══════════════════════════════════════════
+ARABIC DISPLAY (unchanged)
 ═══════════════════════════════════════════
 - Keep Arabic words in their NATURAL JOINED form
-- DO NOT separate prefixes (لِ، بِ، وَ، فِي، الـ) from words
-- Display: "لِطَلَبِ" NOT "لِ + طَلَب"
-- Display: "وَقَالَ" NOT "وَ + قَالَ"
+- DO NOT separate prefixes from words
+- Display: "فَابْتَسَمَ" NOT "فَـ + ابْتَسَمَ"
 
 ═══════════════════════════════════════════
-STEP 2: ENGLISH SENTENCE GENERATION (CRITICAL)
+ENGLISH COMPOSITION (MANDATORY)
 ═══════════════════════════════════════════
-You must produce CLAUSE-LEVEL English, not word-by-word gloss.
+Write English as if you are the original author. Examples:
 
-MANDATORY ENGLISH GRAMMAR RULES:
-• Subject-Verb-Object order: "Allah will help you" NOT "will help you Allah"
-• Auxiliary verbs required: "he will go" NOT "will go he"
-• Adjectives before nouns: "a quiet town" NOT "a town quiet"
-• Proper noun modifiers first: "the Blue River" NOT "the River Blue"
-• Natural connectors: "Then he said" or "He then said" NOT "So said he"
+Arabic meaning: "So-smiled the-father and-said"
+YOU WRITE: "His father smiled and said,"
 
-FORBIDDEN PATTERNS (Arabic calques to avoid):
-✗ "So smiled the father" → ✓ "The father smiled"
-✗ "will help you Allah" → ✓ "Allah will help you"
-✗ "Said to him his father" → ✓ "His father said to him"
-✗ "the path it is long" → ✓ "the path is long"
+Arabic meaning: "If you-are sincere, will-help-you Allah"
+YOU WRITE: "If you are sincere, Allah will help you."
 
-DISCOURSE CONNECTORS - Transform Arabic patterns:
-• Arabic "فَـ" (fa-) → English: "Then," / "So," / "And so," (at sentence start)
-• Arabic "وَ" (wa-) → English: natural "and" placement or omit if redundant
-• Arabic fronted verbs → English: move subject before verb
+Arabic meaning: "in town quiet called River Blue"
+YOU WRITE: "in a quiet town called the Blue River"
 
-CLAUSE RESTRUCTURING:
-• Identify the logical subject, verb, and object
-• Rebuild the sentence in standard English order
-• Add auxiliaries (will, would, has, had) as needed
-• Ensure tense consistency and agreement
+Arabic meaning: "lived young-man his-name Yusuf"
+YOU WRITE: "there lived a young man named Yusuf"
+
+ABSOLUTE RULES:
+• Subject BEFORE verb: "The father smiled" NOT "Smiled the father"
+• Adjective BEFORE noun: "quiet town" NOT "town quiet"
+• Modifier BEFORE proper noun: "Blue River" NOT "River Blue"
+• Auxiliary verbs required: "will help" NOT "help"
+• Natural flow: "His father smiled and said" NOT "So smiled the father and said"
+
+FORBIDDEN — These indicate FAILURE:
+✗ "So smiled the father" (verb before subject)
+✗ "will help you Allah" (object before subject)
+✗ "town quiet" (noun before adjective)
+✗ "River Blue" (noun before modifier)
+✗ Any sentence that sounds translated
 
 ═══════════════════════════════════════════
-STEP 3: WORD PAIRS FOR COLOR ALIGNMENT
+WORD PAIRS (for color mapping AFTER writing)
 ═══════════════════════════════════════════
-- Each pair maps ONE Arabic word to its SEMANTIC meaning
-- Pairs preserve Arabic word order (for color mapping only)
-- The englishLine uses these meanings but REORDERS them into proper English
+After you write the English sentence:
+- Create pairs mapping Arabic words to their semantic meaning
+- Pairs follow Arabic order (for color alignment only)
+- The englishLine is your COMPOSED sentence (not built from pairs)
 
 ═══════════════════════════════════════════
 OUTPUT FORMAT
@@ -81,33 +94,35 @@ Return ONLY valid JSON:
   "lines": [
     {
       "arabicLine": "فَابْتَسَمَ الْأَبُ وَقَالَ",
-      "englishLine": "The father smiled and said:",
+      "englishLine": "His father smiled and said:",
       "pairs": [
         {"arabic": "فَابْتَسَمَ", "english": "smiled"},
-        {"arabic": "الْأَبُ", "english": "The father"},
+        {"arabic": "الْأَبُ", "english": "father"},
         {"arabic": "وَقَالَ", "english": "and said"}
       ]
     },
     {
-      "arabicLine": "إِنْ كُنْتَ صَادِقًا فَسَيُعِينُكَ اللهُ",
+      "arabicLine": "إِنْ صَدَقْتَ أَعَانَكَ اللَّهُ",
       "englishLine": "If you are sincere, Allah will help you.",
       "pairs": [
         {"arabic": "إِنْ", "english": "If"},
-        {"arabic": "كُنْتَ", "english": "you are"},
-        {"arabic": "صَادِقًا", "english": "sincere"},
-        {"arabic": "فَسَيُعِينُكَ", "english": "will help you"},
-        {"arabic": "اللهُ", "english": "Allah"}
+        {"arabic": "صَدَقْتَ", "english": "you are sincere"},
+        {"arabic": "أَعَانَكَ", "english": "will help you"},
+        {"arabic": "اللَّهُ", "english": "Allah"}
       ]
     }
   ]
 }
 
-FINAL CHECK - Your englishLine must:
-✓ Sound like it was written by a native English speaker
-✓ Follow Subject-Verb-Object order
-✓ Have proper auxiliary verbs
-✓ Use natural discourse connectors
-✓ NOT sound like a word-for-word translation`;
+═══════════════════════════════════════════
+SELF-CHECK BEFORE RESPONDING
+═══════════════════════════════════════════
+Read your englishLine aloud. Ask:
+✓ Does this sound like a sentence from a published English novel?
+✓ Would a native speaker write it this way?
+✓ Is there ANY trace of Arabic word order?
+
+If the answer to the last question is YES, REWRITE IT.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
